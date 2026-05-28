@@ -1,7 +1,5 @@
 <?php
 
-session_start();
-
 function verificarRol($rolRequerido){
 
     if(!isset($_SESSION['rol'])){

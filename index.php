@@ -1,5 +1,6 @@
 <?php
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();}// <- Esta línea te falta
 require_once "includes/datos.php";
 
 $categoria = isset($_GET['cat']) ? $_GET['cat'] : null;
@@ -8,6 +9,11 @@ $subcat = isset($_GET['sub']) ? $_GET['sub'] : null;
 $esHombre = ($categoria === 'hombre');
 $esMujer = ($categoria === 'mujer');
 
+// Variables para validar roles
+$usuario_logueado = $_SESSION['usuario'] ?? null;
+$rol = $_SESSION['rol'] ?? null;
+$esAdmin = $rol == 'admin';
+$esVendedor = $rol == 'vendedor';
 ?>
 
 <!DOCTYPE html>
@@ -125,12 +131,23 @@ body{
 
     </div>
 
-    <!-- LOGIN SOLO CLIENTES -->
-    <?php if(!isset($esAdmin) && !isset($esVendedor)): ?>
-    <a href="login.php" class="btn btn-dark ms-auto btn-sm">
-        Iniciar Sesión
-    </a>
+  <!-- LOGIN / USUARIO LOGUEADO -->
+<?php if(!isset($esAdmin) || $esAdmin !== true): ?>
+<div class="ms-auto d-flex align-items-center gap-2">
+    <?php if(isset($_SESSION['usuario'])): ?>
+        <span class="text-white small d-none d-md-inline">
+            <?php echo htmlspecialchars($_SESSION['usuario']); ?>
+        </span>
+        <a href="logout.php" class="btn btn-danger btn-sm">
+            Cerrar Sesión
+        </a>
+    <?php else: ?>
+        <a href="login.php" class="btn btn-dark btn-sm">
+            Iniciar Sesión
+        </a>
     <?php endif; ?>
+</div>
+<?php endif; ?>
 
 </div>
 </nav>
