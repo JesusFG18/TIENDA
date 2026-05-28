@@ -68,74 +68,71 @@ body{
     padding: 25px;
 }
 
+@media(max-width:768px){
+
+    .navbar .container{
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+}
+
 </style>
 
 </head>
 
 <body class="text-white">
-
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark"
      style="background-color: rgba(0,0,0,0.3);">
 
-<div class="container">
+<div class="container-fluid px-4">
 
-    <a class="navbar-brand fw-bold" href="index.php">
-        NOVEDADES_ECONOMICA
-    </a>
+    <!-- GRUPO IZQUIERDA: NOMBRE + CATEGORÍAS PEGADAS -->
+    <div class="d-flex align-items-center gap-3">
+        
+        <!-- NOMBRE TIENDA SOLO TEXTO -->
+        <span class="navbar-brand fw-bold m-0">
+            NOVEDADES_ECONOMICA
+        </span>
 
-    <div class="d-flex align-items-center gap-4 ms-4">
-
-        <a href="index.php"
-           class="text-white text-decoration-none fw-bold">
-
+        <!-- TIENDA SOLO CLIENTE -->
+        <?php if(!isset($esAdmin) && !isset($esVendedor)): ?>
+        <a href="index.php" class="text-white text-decoration-none fw-bold">
             TIENDA
-
         </a>
+        <?php endif; ?>
 
-        <div class="d-flex gap-3 flex-wrap">
-
-            <a href="?cat=hombre"
-               class="text-white text-decoration-none">
-
+        <!-- CATEGORIAS PEGADAS AL NOMBRE -->
+        <div class="d-flex gap-3">
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre' : '?cat=hombre'; ?>"
+               class="text-white text-decoration-none fw-bold">
                 HOMBRE
-
             </a>
-
-            <a href="?cat=mujer"
-               class="text-white text-decoration-none">
-
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer' : '?cat=mujer'; ?>"
+               class="text-white text-decoration-none fw-bold">
                 MUJER
-
             </a>
-
-            <a href="?cat=ninos"
-               class="text-white text-decoration-none">
-
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=ninos' : '?cat=ninos'; ?>"
+               class="text-white text-decoration-none fw-bold">
                 NIÑOS
-
             </a>
-
-            <a href="?cat=accesorios"
-               class="text-white text-decoration-none">
-
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=accesorios' : '?cat=accesorios'; ?>"
+               class="text-white text-decoration-none fw-bold">
                 ACCESORIOS
-
             </a>
-
         </div>
 
     </div>
 
-    <a href="login.php"
-       class="btn btn-dark ms-auto btn-sm">
-
+    <!-- LOGIN SOLO CLIENTES -->
+    <?php if(!isset($esAdmin) && !isset($esVendedor)): ?>
+    <a href="login.php" class="btn btn-dark ms-auto btn-sm">
         Iniciar Sesión
-
     </a>
+    <?php endif; ?>
 
 </div>
-
 </nav>
 
 <!-- CARRUSEL -->
@@ -169,87 +166,87 @@ body{
         </div>
 
         <!-- CONTENIDO -->
-<div class="carousel-inner rounded shadow overflow-hidden">
+        <div class="carousel-inner rounded shadow overflow-hidden">
 
-    <!-- SLIDE 1 -->
-    <div class="carousel-item active">
+            <!-- SLIDE 1 -->
+            <div class="carousel-item active">
 
-        <div class="position-relative">
+                <div class="position-relative">
 
-            <img src="https://ovdivi.com/wp-content/uploads/2025/10/ov-carrusel-slider-productos-woocommerce-divi-wordpress_ov-divi.jpg"
-                 class="d-block w-100"
-                 style="height: 350px; object-fit: cover;"
-                 alt="Productos de Temporada">
+                    <img src="https://ovdivi.com/wp-content/uploads/2025/10/ov-carrusel-slider-productos-woocommerce-divi-wordpress_ov-divi.jpg"
+                         class="d-block w-100"
+                         style="height: 350px; object-fit: cover;"
+                         alt="Productos de Temporada">
 
-            <div class="carousel-caption d-flex flex-column justify-content-center h-100">
+                    <div class="carousel-caption d-flex flex-column justify-content-center h-100">
 
-                <h1 class="fw-bold">
-                    Productos de Temporada
-                </h1>
+                        <h1 class="fw-bold">
+                            Productos de Temporada
+                        </h1>
 
-                <p class="fs-5">
-                    Descubre lo nuevo en moda hombre y mujer.
-                </p>
+                        <p class="fs-5">
+                            Descubre lo nuevo en moda hombre y mujer.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- SLIDE 2 -->
+            <div class="carousel-item">
+
+                <div class="position-relative">
+
+                    <img src="https://addonmall.com/assets/uploads/2021/05/portada-carrusel.jpg"
+                         class="d-block w-100"
+                         style="height: 350px; object-fit: cover;"
+                         alt="Ofertas Especiales">
+
+                    <div class="carousel-caption d-flex flex-column justify-content-center h-100">
+
+                        <h1 class="fw-bold">
+                            Ofertas Especiales
+                        </h1>
+
+                        <p class="fs-5">
+                            Aprovecha descuentos exclusivos esta semana.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- SLIDE 3 -->
+            <div class="carousel-item">
+
+                <div class="position-relative">
+
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJrH2O8s6AldY51wWWC83D5fv2c-DRS9dzWw&s"
+                         class="d-block w-100"
+                         style="height: 350px; object-fit: cover;"
+                         alt="Productos Más Vendidos">
+
+                    <div class="carousel-caption d-flex flex-column justify-content-center h-100">
+
+                        <h1 class="fw-bold">
+                            Productos Más Vendidos
+                        </h1>
+
+                        <p class="fs-5">
+                            Los artículos favoritos de nuestros clientes.
+                        </p>
+
+                    </div>
+
+                </div>
 
             </div>
 
         </div>
-
-    </div>
-
-    <!-- SLIDE 2 -->
-    <div class="carousel-item">
-
-        <div class="position-relative">
-
-            <img src="https://addonmall.com/assets/uploads/2021/05/portada-carrusel.jpg"
-                 class="d-block w-100"
-                 style="height: 350px; object-fit: cover;"
-                 alt="Ofertas Especiales">
-
-            <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-
-                <h1 class="fw-bold">
-                    Ofertas Especiales
-                </h1>
-
-                <p class="fs-5">
-                    Aprovecha descuentos exclusivos esta semana.
-                </p>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <!-- SLIDE 3 -->
-    <div class="carousel-item">
-
-        <div class="position-relative">
-
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJrH2O8s6AldY51wWWC83D5fv2c-DRS9dzWw&s"
-                 class="d-block w-100"
-                 style="height: 350px; object-fit: cover;"
-                 alt="Productos Más Vendidos">
-
-            <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-
-                <h1 class="fw-bold">
-                    Productos Más Vendidos
-                </h1>
-
-                <p class="fs-5">
-                    Los artículos favoritos de nuestros clientes.
-                </p>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
 
         <!-- CONTROLES -->
         <button class="carousel-control-prev"
@@ -278,74 +275,56 @@ body{
 
 <!-- SUBCATEGORIAS -->
 <?php if(($esHombre || $esMujer) && !$subcat): ?>
-
 <div class="container my-4">
-
-    <h3 class="mb-3">
-        Categorias
-    </h3>
-
+    <h3 class="mb-3">Categorias</h3>
     <div class="row g-3">
-
         <?php if($esHombre): ?>
-
         <div class="col-6 col-md-3">
-            <a href="?cat=hombre&sub=camisas"
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=camisas' : '?cat=hombre&sub=camisas'; ?>"
                class="btn btn-light w-100 py-4 fw-bold shadow">
                 👕 Camisas
             </a>
         </div>
-
         <div class="col-6 col-md-3">
-            <a href="?cat=hombre&sub=pantalones"
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=pantalones' : '?cat=hombre&sub=pantalones'; ?>"
                class="btn btn-light w-100 py-4 fw-bold shadow">
                 👖 Pantalones
             </a>
         </div>
-
         <div class="col-6 col-md-3">
-            <a href="?cat=hombre&sub=boxer"
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=boxer' : '?cat=hombre&sub=boxer'; ?>"
                class="btn btn-light w-100 py-4 fw-bold shadow">
                 🩲 Boxer
             </a>
         </div>
-
         <div class="col-6 col-md-3">
-            <a href="?cat=hombre&sub=sudadera"
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=sudadera' : '?cat=hombre&sub=sudadera'; ?>"
                class="btn btn-light w-100 py-4 fw-bold shadow">
                 🧥 Sudadera/Sueter
             </a>
         </div>
-
         <?php elseif($esMujer): ?>
-
         <div class="col-6 col-md-3">
-            <a href="?cat=mujer&sub=blusas"
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer&sub=blusas' : '?cat=mujer&sub=blusas'; ?>"
                class="btn btn-light w-100 py-4 fw-bold shadow">
                 👚 Blusas
             </a>
         </div>
-
         <div class="col-6 col-md-3">
-            <a href="?cat=mujer&sub=Shorts"
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer&sub=shorts' : '?cat=mujer&sub=shorts'; ?>"
                class="btn btn-light w-100 py-4 fw-bold shadow">
                 🩳 Shorts
             </a>
         </div>
-
         <div class="col-6 col-md-3">
-            <a href="?cat=mujer&sub=vestidos"
+            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer&sub=vestidos' : '?cat=mujer&sub=vestidos'; ?>"
                class="btn btn-light w-100 py-4 fw-bold shadow">
                 👗 Vestidos
             </a>
         </div>
-
         <?php endif; ?>
-
     </div>
-
 </div>
-
 <?php endif; ?>
 
 <!-- PRODUCTOS -->
@@ -363,16 +342,16 @@ body{
 
     </h3>
 
-    <?php if($subcat): ?>
+   <?php if($subcat): ?>
 
-    <a href="?cat=<?php echo $categoria; ?>"
-       class="btn btn-outline-light btn-sm">
+<a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat='.$categoria : '?cat='.$categoria; ?>"
+   class="btn btn-outline-light btn-sm">
 
-        ← Volver
+    ← Volver
 
-    </a>
+</a>
 
-    <?php endif; ?>
+<?php endif; ?>
 
 </div>
 
@@ -389,7 +368,6 @@ if(!$categoria){
     $mostrar = true;
 
 }
-
 elseif($categoria === $producto['cat']){
 
     if(!$subcat){
@@ -397,7 +375,6 @@ elseif($categoria === $producto['cat']){
         $mostrar = true;
 
     }
-
     elseif($subcat === $producto['sub']){
 
         $mostrar = true;

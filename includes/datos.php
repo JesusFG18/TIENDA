@@ -54,7 +54,7 @@ $productos = [
         'precio' => 350,
         'stock' => 6,
         'cat' => 'mujer',
-        'sub' => 'Shorts',
+        'sub' => 'shorts',
         'img' => 'https://m.media-amazon.com/images/I/71M8j7b4LzL._UY1000_.jpg'
     ],
 
