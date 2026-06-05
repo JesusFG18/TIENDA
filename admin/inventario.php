@@ -1,369 +1,178 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();}
+session_start();
+require_once "../includes/db.php";
 require_once "../includes/auth.php";
-require_once "../includes/datos.php";
 verificarRol('admin');
 
-$panel = isset($_GET['panel']) ? $_GET['panel'] : 'tienda';
+// MOSTRAR PASSWORD TEMPORAL DE ADMIN1
+$mostrar_pass = false;
+if(isset($_SESSION['admin_pass_temporal'])){
+    $mostrar_pass = $_SESSION['admin_pass_temporal'];
+    unset($_SESSION['admin_pass_temporal']);
+}
+
+// AGREGAR PRODUCTO
+if(isset($_POST['agregar_producto'])){
+    $nombre = trim($_POST['nombre']);
+    $precio = floatval($_POST['precio']);
+    $stock = intval($_POST['stock']);
+    $categoria = $_POST['categoria'];
+    
+    $stmt = $conn->prepare("INSERT INTO productos (nombre, precio, stock, categoria, activo) VALUES (?, ?, ?, ?, 1)");
+    $stmt->bind_param("sdis", $nombre, $precio, $stock, $categoria);
+    $stmt->execute();
+    header("Location: inventario.php?ok=1");
+    exit();
+}
+
+// ELIMINAR PRODUCTO
+if(isset($_GET['eliminar'])){
+    $id = intval($_GET['eliminar']);
+    $conn->query("UPDATE productos SET activo = 0 WHERE id = $id");
+    header("Location: inventario.php?del=1");
+    exit();
+}
+
+// CARGAR PRODUCTOS
+$productos = $conn->query("SELECT * FROM productos WHERE activo = 1 ORDER BY id DESC");
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Administrador</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        body{
-            background-color: #f4f4f4;
-        }
-        .sidebar{
-            width: 250px;
-            height: 100vh;
-            background-color: #5e1920;
-            position: fixed;
-            top: 0;
-            left: 0;
-            padding-top: 20px;
-            z-index: 1040;
-            overflow-y: auto;
-        }
-        .sidebar h3{
-            color: white;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .sidebar a{
-            display: block;
-            color: white;
-            text-decoration: none;
-            padding: 15px 20px;
-            transition: 0.3s;
-        }
-        .sidebar a:hover, .sidebar a.active{
-            background-color: rgba(255,255,255,0.1);
-        }
-        .main-content{
-            margin-left: 250px;
-            padding: 30px;
-        }
-        .main-content.tienda-mode{
-            padding: 0;
-            margin-left: 250px;
-            background-color: #5e1920;
-            min-height: 100vh;
-        }
-        .card-panel{
-            border: none;
-            border-radius: 15px;
-            transition: 0.3s;
-        }
-        .card-panel:hover{
-            transform: translateY(-5px);
-        }
-        .tabla{
-            border-radius: 15px;
-            overflow: hidden;
-        }
-        .topbar{
-            background-color: white;
-            border-radius: 15px;
-            padding: 20px;
-        }
-        @media (max-width: 768px) {
-            .sidebar { width: 200px; }
-            .main-content { margin-left: 200px; }
-            .main-content.tienda-mode { margin-left: 200px; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Inventario</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<style>
+body { background-color: #f8f9fa; }
+.sidebar { min-height: 100vh; background-color: #5e1920; }
+</style>
 </head>
 <body>
 
-<!-- SIDEBAR FIJO -->
-<div class="sidebar" id="sidebar">
-    <h3> ADMIN</h3>
-    
-    <a href="?panel=inventario" class="<?php echo $panel=='inventario'?'active':''; ?>">
-        <i class="bi bi-box-seam"></i> Inventario
-    </a>
-    <a href="?panel=pedidos" class="<?php echo $panel=='pedidos'?'active':''; ?>">
-        <i class="bi bi-cart-check"></i> Pedidos
-    </a>
-    <a href="?panel=reportes" class="<?php echo $panel=='reportes'?'active':''; ?>">
-        <i class="bi bi-graph-up"></i> Reportes
-    </a>
-    <a href="?panel=usuarios" class="<?php echo $panel=='usuarios'?'active':''; ?>">
-        <i class="bi bi-people"></i> Usuarios
-    </a>
-    <a href="?panel=categorias" class="<?php echo $panel=='categorias'?'active':''; ?>">
-        <i class="bi bi-tags"></i> Secciones/Categorías
-    </a>
-    <a href="?panel=tienda" class="<?php echo $panel=='tienda'?'active':''; ?>">
-        <i class="bi bi-shop"></i> Ir a Tienda
-    </a>
-    <a href="../logout.php">
-        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
-    </a>
-</div>
-
-<!-- CONTENIDO -->
-<div class="main-content <?php echo $panel=='tienda'?'tienda-mode':''; ?>" id="mainContent">
-
-<?php if($panel != 'usuarios' && $panel != 'categorias' && $panel != 'tienda'): ?>
-    <!-- TOPBAR -->
-    <div class="topbar shadow-sm mb-4 d-flex justify-content-between align-items-center">
-        <div>
-            <h2 class="fw-bold mb-0">Panel Administrador</h2>
-            <small class="text-muted">Bienvenido Administrador</small>
-        </div>
-        <div>
-            <span class="badge bg-success p-2">En línea</span>
-        </div>
+<div class="d-flex">
+    <!-- SIDEBAR -->
+    <div class="sidebar text-white p-3" style="width: 250px;">
+        <h4 class="text-center mb-4">ADMIN</h4>
+        <ul class="nav flex-column">
+            <li class="nav-item mb-2 bg-danger rounded"><a href="inventario.php" class="nav-link text-white"><i class="bi bi-box"></i> Inventario</a></li>
+            <li class="nav-item mb-2"><a href="pedidos.php" class="nav-link text-white"><i class="bi bi-cart"></i> Pedidos</a></li>
+            <li class="nav-item mb-2"><a href="reportes.php" class="nav-link text-white"><i class="bi bi-graph-up"></i> Reportes</a></li>
+            <li class="nav-item mb-2"><a href="usuarios.php" class="nav-link text-white"><i class="bi bi-people"></i> Usuarios</a></li>
+            <li class="nav-item mb-2"><a href="categorias.php" class="nav-link text-white"><i class="bi bi-tags"></i> Secciones/Categorías</a></li>
+            <li class="nav-item mb-2"><a href="../index.php" class="nav-link text-white"><i class="bi bi-shop"></i> Ir a Tienda</a></li>
+            <li class="nav-item mt-4"><a href="../logout.php" class="nav-link text-white"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a></li>
+        </ul>
     </div>
 
-    <!-- TARJETAS -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card card-panel shadow-sm p-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5>Productos</h5>
-                        <h2 class="fw-bold"><?php echo count($productos); ?></h2>
-                    </div>
-                    <i class="bi bi-box-seam fs-1 text-primary"></i>
+    <!-- CONTENIDO -->
+    <div class="flex-grow-1 p-4">
+        
+        <?php if($mostrar_pass): ?>
+        <div class="alert alert-warning alert-dismissible fade show">
+            <h5><i class="bi bi-key-fill"></i> Contraseña temporal generada</h5>
+            <p class="mb-0">Tu nueva contraseña para <strong>admin1</strong> es: <code class="fs-5 text-dark"><?php echo $mostrar_pass; ?></code></p>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php endif; ?>
+
+        <?php if(isset($_GET['ok'])): ?>
+        <div class="alert alert-success">Producto agregado correctamente</div>
+        <?php endif; ?>
+
+        <?php if(isset($_GET['del'])): ?>
+        <div class="alert alert-warning">Producto eliminado</div>
+        <?php endif; ?>
+
+        <div class="card">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Inventario de Productos</h5>
+                <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#modalProducto">
+                    <i class="bi bi-plus-circle"></i> Agregar Producto
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Precio</th>
+                                <th>Stock</th>
+                                <th>Categoría</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if($productos->num_rows > 0): ?>
+                                <?php while($p = $productos->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $p['id']; ?></td>
+                                    <td><?php echo $p['nombre']; ?></td>
+                                    <td>$<?php echo number_format($p['precio'], 2); ?></td>
+                                    <td>
+                                        <span class="badge bg-<?php echo $p['stock'] > 10 ? 'success' : ($p['stock'] > 0 ? 'warning' : 'danger'); ?>">
+                                            <?php echo $p['stock']; ?>
+                                        </span>
+                                    </td>
+                                    <td><?php echo $p['categoria']; ?></td>
+                                    <td>
+                                        <a href="?eliminar=<?php echo $p['id']; ?>" class="btn btn-danger btn-sm" onclick="return confirm('¿Eliminar producto?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr><td colspan="6" class="text-center text-muted">No hay productos registrados</td></tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card card-panel shadow-sm p-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5>Pedidos</h5>
-                        <h2 class="fw-bold">0</h2>
-                    </div>
-                    <i class="bi bi-cart-check fs-1 text-success"></i>
+    </div>
+</div>
+
+<!-- MODAL AGREGAR PRODUCTO -->
+<div class="modal fade" id="modalProducto" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Producto</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card card-panel shadow-sm p-4">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5>Usuarios</h5>
-                        <h2 class="fw-bold">3</h2>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" required>
                     </div>
-                    <i class="bi bi-people fs-1 text-danger"></i>
+                    <div class="mb-3">
+                        <label class="form-label">Precio</label>
+                        <input type="number" step="0.01" name="precio" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock</label>
+                        <input type="number" name="stock" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría</label>
+                        <input type="text" name="categoria" class="form-control" required>
+                    </div>
                 </div>
-            </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" name="agregar_producto" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
         </div>
     </div>
-<?php endif; ?>
-
-<!-- PANEL INVENTARIO -->
-<?php if($panel == 'inventario'): ?>
-<div class="card shadow-sm border-0 tabla">
-    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Inventario de Productos</h5>
-        <button class="btn btn-success btn-sm">Agregar Producto</button>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Imagen</th>
-                    <th>Nombre</th>
-                    <th>Categoría</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach($productos as $producto): ?>
-                <tr>
-                    <td>
-                        <img src="<?php echo $producto['img']; ?>"
-                             width="60"
-                             height="60"
-                             style="object-fit: cover; border-radius: 10px;">
-                    </td>
-                    <td><?php echo $producto['nombre']; ?></td>
-                    <td><?php echo ucfirst($producto['sub']); ?></td>
-                    <td>$<?php echo $producto['precio']; ?></td>
-                    <td><?php echo $producto['stock']; ?></td>
-                    <td>
-                        <button class="btn btn-primary btn-sm">Editar</button>
-                        <button class="btn btn-danger btn-sm">Eliminar</button>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- PANEL USUARIOS -->
-<?php if($panel == 'usuarios'): ?>
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">Gestión de Usuarios</h5>
-    </div>
-    <div class="card-body">
-        <form class="row g-3 mb-4">
-            <div class="col-md-4">
-                <label class="form-label">Tipo Usuario</label>
-                <select class="form-select" id="tipoUsuario">
-                    <option value="cliente">Cliente</option>
-                    <option value="vendedor">Vendedor</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Nombre / Usuario</label>
-                <input type="text" class="form-control" id="usuario">
-            </div>
-            <div class="col-md-4" id="campoTelefono">
-                <label class="form-label">Número Telefónico</label>
-                <input type="text" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Contraseña</label>
-                <input type="text" class="form-control" id="password" readonly>
-            </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-success">Registrar Usuario</button>
-            </div>
-        </form>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th>Teléfono</th>
-                        <th>Contraseña</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>admin1</td>
-                        <td>Admin</td>
-                        <td>-</td>
-                        <td>A8f2Kp1</td>
-                        <td><button class="btn btn-danger btn-sm">Eliminar</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- PANEL CATEGORIAS -->
-<?php if($panel == 'categorias'): ?>
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-dark text-white">
-        <h5 class="mb-0">Gestión de Secciones y Categorías</h5>
-    </div>
-    <div class="card-body">
-        <form class="row g-3 mb-4">
-            <div class="col-md-5">
-                <label class="form-label">Nueva Sección</label>
-                <input type="text" class="form-control" placeholder="Ejemplo: Deportes">
-            </div>
-            <div class="col-md-5">
-                <label class="form-label">Nueva Categoría</label>
-                <input type="text" class="form-control" placeholder="Ejemplo: Jerseys">
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-                <button class="btn btn-success w-100">Agregar</button>
-            </div>
-        </form>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Sección</th>
-                        <th>Categoría</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Deportes</td>
-                        <td>Jerseys</td>
-                        <td><button class="btn btn-danger btn-sm">Eliminar</button></td>
-                    </tr>
-                    <tr>
-                        <td>Escolar</td>
-                        <td>Mochilas</td>
-                        <td><button class="btn btn-danger btn-sm">Eliminar</button></td>
-                    </tr>
-                    <tr>
-                        <td>Tecnología</td>
-                        <td>Audífonos</td>
-                        <td><button class="btn btn-danger btn-sm">Eliminar</button></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<?php endif; ?>
-
-<!-- PANEL TIENDA -->
-<?php if($panel == 'tienda'): ?>
-    <?php 
-    $esAdmin = true; // Oculta el botón "Iniciar Sesión"
-    include "../index.php"; 
-    ?>
-<?php endif; ?>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-// SCRIPT DE USUARIOS
-const tipoUsuario = document.getElementById('tipoUsuario');
-const campoTelefono = document.getElementById('campoTelefono');
-const usuario = document.getElementById('usuario');
-const password = document.getElementById('password');
-
-if(tipoUsuario){
-    tipoUsuario.addEventListener('change', function(){
-        if(this.value == 'cliente'){
-            campoTelefono.style.display = 'block';
-            password.removeAttribute('readonly');
-            password.value = '';
-        }else{
-            campoTelefono.style.display = 'none';
-            generarPassword();
-        }
-    });
-}
-
-if(usuario){
-    usuario.addEventListener('input', function(){
-        if(tipoUsuario.value != 'cliente'){
-            generarPassword();
-        }
-    });
-}
-
-function generarPassword(){
-    let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let pass = "";
-    for(let i = 0; i < 8; i++){
-        pass += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    password.value = pass;
-}
-</script>
-
 </body>
 </html>

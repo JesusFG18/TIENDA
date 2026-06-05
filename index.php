@@ -1,6 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();}// <- Esta línea te falta
+    session_start();
+}
 require_once "includes/datos.php";
 
 $categoria = isset($_GET['cat']) ? $_GET['cat'] : null;
@@ -20,322 +21,191 @@ $esVendedor = $rol == 'vendedor';
 <html lang="es">
 
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Novedades Economica</title>
-
+<title>Novedades Económica</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link rel="stylesheet" href="css/estilos.css">
 
 <style>
-
-body{
-    background-color: #5e1920 !important;
-}
-
-.card-producto{
-    border-radius: 15px;
-    transition: 0.3s ease;
-}
-
-.card-producto:hover{
-    transform: translateY(-5px);
-}
-
-.btn-reservar{
-    background-color: #5e1920;
-    border-radius: 20px;
-}
-
-.btn-reservar:hover{
-    background-color: #7a1f29;
-}
-
-.cantidad-input{
-    max-width: 50px;
-}
-
-.carousel-caption{
-    background: rgba(0,0,0,0.55);
-    padding: 20px;
-    border-radius: 15px;
-}
-
-.carousel-caption h1,
-.carousel-caption p{
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon{
-    background-color: rgba(0,0,0,0.7);
-    border-radius: 50%;
-    padding: 25px;
-}
-
-@media(max-width:768px){
-
-    .navbar .container{
-        flex-direction: column;
-        align-items: flex-start !important;
-    }
-
-}
-
+body{ background-color: #fff !important; }
+.navbar-custom{ background-color: #5e1920; }
+.btn-nav-active{ background-color: rgba(0,0,0,0.3); border-radius: 25px; }
+.hero-banner{ background-color: #5e1920; border-radius: 20px; }
+.btn-hero{ background-color: #fff; color: #5e1920; border-radius: 15px; border: none; padding: 12px 30px; font-weight: bold; }
+.btn-hero:hover{ background-color: #f8f9fa; color: #5e1920; }
+.badge-coleccion{ background-color: #f0ad4e; color: #5e1920; border-radius: 20px; padding: 8px 20px; font-weight: 600; }
+.section-productos{ background-color: #fff; padding: 60px 0; }
+.talla-select:invalid{ border-color: #dc3545; }
+.carousel-control-prev-icon, .carousel-control-next-icon{ background-color: #fff; border-radius: 50%; padding: 25px; filter: drop-shadow(0 2px 8px rgba(0,0,0,0.2)); }
+.carousel-indicators button{ background-color: #5e1920; width: 30px; height: 5px; border-radius: 5px; }
+.btn-reservar { background-color: #5e1920; }
+.btn-reservar:hover { background-color: #4a1419; }
+@media(max-width:992px){ .navbar-center{ display: none !important; } }
 </style>
-
 </head>
 
-<body class="text-white">
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark"
-     style="background-color: rgba(0,0,0,0.3);">
-
+<body>
+<!-- NAVBAR CORREGIDO -->
+<nav class="navbar navbar-expand-lg navbar-custom py-3">
 <div class="container-fluid px-4">
 
-    <!-- GRUPO IZQUIERDA: NOMBRE + CATEGORÍAS PEGADAS -->
-    <div class="d-flex align-items-center gap-3">
-        
-        <!-- NOMBRE TIENDA SOLO TEXTO -->
-        <span class="navbar-brand fw-bold m-0">
-            NOVEDADES_ECONOMICA
-        </span>
+    <!-- LOGO IZQUIERDA -->
+    <a class="navbar-brand fw-bold fs-3 m-0" href="index.php">
+        <span class="text-white">NOVEDADES</span><span style="color: #f0ad4e;">ECONÓMICA</span>
+    </a>
 
-        <!-- TIENDA SOLO CLIENTE -->
-        <?php if(!isset($esAdmin) && !isset($esVendedor)): ?>
-        <a href="index.php" class="text-white text-decoration-none fw-bold">
-            TIENDA
+    <!-- CATEGORIAS CENTRO -->
+    <div class="mx-auto d-none d-lg-flex gap-2 navbar-center">
+        <a href="index.php" class="btn btn-sm px-4 py-2 fw-bold text-white <?php echo !$categoria ? 'btn-nav-active' : ''; ?>">
+            NOVEDADES
         </a>
-        <?php endif; ?>
-
-        <!-- CATEGORIAS PEGADAS AL NOMBRE -->
-        <div class="d-flex gap-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre' : '?cat=hombre'; ?>"
-               class="text-white text-decoration-none fw-bold">
-                HOMBRE
-            </a>
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer' : '?cat=mujer'; ?>"
-               class="text-white text-decoration-none fw-bold">
-                MUJER
-            </a>
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=ninos' : '?cat=ninos'; ?>"
-               class="text-white text-decoration-none fw-bold">
-                NIÑOS
-            </a>
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=accesorios' : '?cat=accesorios'; ?>"
-               class="text-white text-decoration-none fw-bold">
-                ACCESORIOS
-            </a>
-        </div>
-
+        <a href="?cat=hombre" class="btn btn-sm px-4 py-2 fw-bold text-white <?php echo $categoria=='hombre' ? 'btn-nav-active' : ''; ?>">
+            HOMBRE
+        </a>
+        <a href="?cat=mujer" class="btn btn-sm px-4 py-2 fw-bold text-white <?php echo $categoria=='mujer' ? 'btn-nav-active' : ''; ?>">
+            MUJER
+        </a>
+        <a href="?cat=ninos" class="btn btn-sm px-4 py-2 fw-bold text-white <?php echo $categoria=='ninos' ? 'btn-nav-active' : ''; ?>">
+            NIÑOS
+        </a>
+        <a href="?cat=accesorios" class="btn btn-sm px-4 py-2 fw-bold text-white <?php echo $categoria=='accesorios' ? 'btn-nav-active' : ''; ?>">
+            ACCESORIOS
+        </a>
     </div>
 
-  <!-- LOGIN / USUARIO LOGUEADO -->
-<?php if(!isset($esAdmin) || $esAdmin !== true): ?>
-<div class="ms-auto d-flex align-items-center gap-2">
-    <?php if(isset($_SESSION['usuario'])): ?>
-        <span class="text-white small d-none d-md-inline">
-            <?php echo htmlspecialchars($_SESSION['usuario']); ?>
-        </span>
-        <a href="logout.php" class="btn btn-danger btn-sm">
-            Cerrar Sesión
+    <!-- CARRITO + LOGIN DERECHA - OCULTO PARA ADMIN/VENDEDOR -->
+    <?php if(!$esAdmin && !$esVendedor): ?>
+    <div class="d-flex align-items-center gap-3">
+        <!-- CARRITO - CORRECCIÓN 1: Cambié carrito.php por carrito/ -->
+        <a href="carrito/" class="position-relative text-white text-decoration-none">
+            <i class="bi bi-cart3 fs-4"></i>
+            <?php 
+            $total_items = 0;
+            if(isset($_SESSION['carrito'])) {
+                // CORRECCIÓN 2: Tu carrito guarda arrays, no números directos
+                foreach($_SESSION['carrito'] as $item){
+                    $total_items += $item['cantidad'];
+                }
+            }
+            ?>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                <?php echo $total_items; ?>
+            </span>
         </a>
-    <?php else: ?>
-        <a href="login.php" class="btn btn-dark btn-sm">
-            Iniciar Sesión
-        </a>
+        
+        <!-- LOGIN / USUARIO -->
+        <?php if(isset($_SESSION['usuario'])): ?>
+            <div class="dropdown">
+                <button class="btn btn-light btn-sm fw-bold dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 20px; color: #5e1920;">
+                    <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['usuario']); ?>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="mis_compras.php"><i class="bi bi-bag-check"></i> Mis Compras</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="logout.php"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</a></li>
+                </ul>
+            </div>
+        <?php else: ?>
+            <a href="login.php" class="btn btn-light btn-sm fw-bold" style="border-radius: 20px; color: #5e1920;">
+                Iniciar Sesión
+            </a>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
-</div>
-<?php endif; ?>
 
 </div>
 </nav>
 
-<!-- CARRUSEL -->
+<!-- HERO BANNER NUEVO -->
 <?php if(!$categoria): ?>
-
-<div class="container my-4">
-
-    <div id="carouselTienda"
-         class="carousel slide"
-         data-bs-ride="carousel">
-
-        <!-- INDICADORES -->
-        <div class="carousel-indicators">
-
-            <button type="button"
-                    data-bs-target="#carouselTienda"
-                    data-bs-slide-to="0"
-                    class="active">
-            </button>
-
-            <button type="button"
-                    data-bs-target="#carouselTienda"
-                    data-bs-slide-to="1">
-            </button>
-
-            <button type="button"
-                    data-bs-target="#carouselTienda"
-                    data-bs-slide-to="2">
-            </button>
-
-        </div>
-
-        <!-- CONTENIDO -->
-        <div class="carousel-inner rounded shadow overflow-hidden">
-
+<div style="background-color: #fff; padding: 30px 0;">
+<div class="container">
+    <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+        
+        <div class="carousel-inner rounded-4 overflow-hidden shadow-lg">
             <!-- SLIDE 1 -->
             <div class="carousel-item active">
-
-                <div class="position-relative">
-
-                    <img src="https://ovdivi.com/wp-content/uploads/2025/10/ov-carrusel-slider-productos-woocommerce-divi-wordpress_ov-divi.jpg"
-                         class="d-block w-100"
-                         style="height: 350px; object-fit: cover;"
-                         alt="Productos de Temporada">
-
-                    <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-
-                        <h1 class="fw-bold">
-                            Productos de Temporada
-                        </h1>
-
-                        <p class="fs-5">
-                            Descubre lo nuevo en moda hombre y mujer.
-                        </p>
-
+                <div class="hero-banner">
+                    <div class="row g-0 align-items-center" style="min-height: 450px;">
+                        <div class="col-lg-6 p-5">
+                            <span class="badge-coleccion mb-3 d-inline-block">
+                                COLECCIÓN 2026
+                            </span>
+                            <h1 class="fw-bold text-white mb-3" style="font-size: 3.5rem; line-height: 1.1;">
+                                Productos Más<br>Vendidos
+                            </h1>
+                            <p class="text-white mb-4 fs-5">
+                                Descubre las tendencias que todos están comprando esta temporada
+                            </p>
+                            <a href="#productos" class="btn btn-hero">
+                                Ver Colección
+                            </a>
+                        </div>
+                        <div class="col-lg-6 p-4">
+                            <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600" 
+                                 class="img-fluid rounded-4" 
+                                 style="height: 380px; width: 100%; object-fit: cover;"
+                                 alt="Colección">
+                        </div>
                     </div>
-
                 </div>
-
             </div>
-
-            <!-- SLIDE 2 -->
-            <div class="carousel-item">
-
-                <div class="position-relative">
-
-                    <img src="https://addonmall.com/assets/uploads/2021/05/portada-carrusel.jpg"
-                         class="d-block w-100"
-                         style="height: 350px; object-fit: cover;"
-                         alt="Ofertas Especiales">
-
-                    <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-
-                        <h1 class="fw-bold">
-                            Ofertas Especiales
-                        </h1>
-
-                        <p class="fs-5">
-                            Aprovecha descuentos exclusivos esta semana.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <!-- SLIDE 3 -->
-            <div class="carousel-item">
-
-                <div class="position-relative">
-
-                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRJrH2O8s6AldY51wWWC83D5fv2c-DRS9dzWw&s"
-                         class="d-block w-100"
-                         style="height: 350px; object-fit: cover;"
-                         alt="Productos Más Vendidos">
-
-                    <div class="carousel-caption d-flex flex-column justify-content-center h-100">
-
-                        <h1 class="fw-bold">
-                            Productos Más Vendidos
-                        </h1>
-
-                        <p class="fs-5">
-                            Los artículos favoritos de nuestros clientes.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
         </div>
 
         <!-- CONTROLES -->
-        <button class="carousel-control-prev"
-                type="button"
-                data-bs-target="#carouselTienda"
-                data-bs-slide="prev">
-
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev" style="width: 50px; left: -25px;">
             <span class="carousel-control-prev-icon"></span>
-
         </button>
-
-        <button class="carousel-control-next"
-                type="button"
-                data-bs-target="#carouselTienda"
-                data-bs-slide="next">
-
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next" style="width: 50px; right: -25px;">
             <span class="carousel-control-next-icon"></span>
-
         </button>
 
     </div>
-
 </div>
-
+</div>
 <?php endif; ?>
 
 <!-- SUBCATEGORIAS -->
 <?php if(($esHombre || $esMujer) && !$subcat): ?>
-<div class="container my-4">
-    <h3 class="mb-3">Categorias</h3>
+<div class="container py-5 bg-white">
+    <h3 class="fw-bold mb-4" style="color: #6A0F1A;">Categorías</h3>
     <div class="row g-3">
         <?php if($esHombre): ?>
         <div class="col-6 col-md-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=camisas' : '?cat=hombre&sub=camisas'; ?>"
-               class="btn btn-light w-100 py-4 fw-bold shadow">
+            <a href="?cat=hombre&sub=camisas" class="btn w-100 py-4 fw-bold shadow-sm text-white" style="background-color: #6A0F1A; border-radius: 15px;">
                 👕 Camisas
             </a>
         </div>
         <div class="col-6 col-md-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=pantalones' : '?cat=hombre&sub=pantalones'; ?>"
-               class="btn btn-light w-100 py-4 fw-bold shadow">
+            <a href="?cat=hombre&sub=pantalones" class="btn w-100 py-4 fw-bold shadow-sm text-white" style="background-color: #6A0F1A; border-radius: 15px;">
                 👖 Pantalones
             </a>
         </div>
         <div class="col-6 col-md-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=boxer' : '?cat=hombre&sub=boxer'; ?>"
-               class="btn btn-light w-100 py-4 fw-bold shadow">
+            <a href="?cat=hombre&sub=boxer" class="btn w-100 py-4 fw-bold shadow-sm text-white" style="background-color: #6A0F1A; border-radius: 15px;">
                 🩲 Boxer
             </a>
         </div>
         <div class="col-6 col-md-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=hombre&sub=sudadera' : '?cat=hombre&sub=sudadera'; ?>"
-               class="btn btn-light w-100 py-4 fw-bold shadow">
+            <a href="?cat=hombre&sub=sudadera" class="btn w-100 py-4 fw-bold shadow-sm text-white" style="background-color: #6A0F1A; border-radius: 15px;">
                 🧥 Sudadera/Sueter
             </a>
         </div>
         <?php elseif($esMujer): ?>
         <div class="col-6 col-md-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer&sub=blusas' : '?cat=mujer&sub=blusas'; ?>"
-               class="btn btn-light w-100 py-4 fw-bold shadow">
+            <a href="?cat=mujer&sub=blusas" class="btn w-100 py-4 fw-bold shadow-sm text-white" style="background-color: #6A0F1A; border-radius: 15px;">
                 👚 Blusas
             </a>
         </div>
         <div class="col-6 col-md-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer&sub=shorts' : '?cat=mujer&sub=shorts'; ?>"
-               class="btn btn-light w-100 py-4 fw-bold shadow">
+            <a href="?cat=mujer&sub=shorts" class="btn w-100 py-4 fw-bold shadow-sm text-white" style="background-color: #6A0F1A; border-radius: 15px;">
                 🩳 Shorts
             </a>
         </div>
         <div class="col-6 col-md-3">
-            <a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat=mujer&sub=vestidos' : '?cat=mujer&sub=vestidos'; ?>"
-               class="btn btn-light w-100 py-4 fw-bold shadow">
+            <a href="?cat=mujer&sub=vestidos" class="btn w-100 py-4 fw-bold shadow-sm text-white" style="background-color: #6A0F1A; border-radius: 15px;">
                 👗 Vestidos
             </a>
         </div>
@@ -345,31 +215,20 @@ body{
 <?php endif; ?>
 
 <!-- PRODUCTOS -->
-<div class="container py-4">
+<div id="productos" class="section-productos">
+<div class="container">
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-
-    <h3 class="fw-bold text-white">
-
-        <?php
-            echo $subcat
-                ? ucfirst($subcat)
-                : "Productos Más Vendidos";
-        ?>
-
-    </h3>
-
-   <?php if($subcat): ?>
-
-<a href="<?php echo isset($esAdmin) ? '?panel=tienda&cat='.$categoria : '?cat='.$categoria; ?>"
-   class="btn btn-outline-light btn-sm">
-
-    ← Volver
-
-</a>
-
-<?php endif; ?>
-
+<div class="text-center mb-5">
+    <h2 class="fw-bold" style="font-size: 2.5rem; color: #2c3e50;">
+        <?php echo $subcat ? ucfirst($subcat) : "Productos Más Vendidos"; ?>
+    </h2>
+    <p class="text-muted fs-5">Los favoritos de nuestros clientes</p>
+    
+    <?php if($subcat): ?>
+    <a href="?cat=<?php echo $categoria; ?>" class="btn btn-outline-dark btn-sm mt-2">
+        ← Volver a <?php echo ucfirst($categoria); ?>
+    </a>
+    <?php endif; ?>
 </div>
 
 <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
@@ -377,80 +236,98 @@ body{
 <?php foreach($productos as $producto): ?>
 
 <?php
-
 $mostrar = false;
-
 if(!$categoria){
-
     $mostrar = true;
-
 }
 elseif($categoria === $producto['cat']){
-
     if(!$subcat){
-
         $mostrar = true;
-
     }
     elseif($subcat === $producto['sub']){
-
         $mostrar = true;
-
     }
-
 }
 
+$esNuevo = isset($producto['nuevo']) && $producto['nuevo'] === true;
 ?>
 
 <?php if($mostrar): ?>
 
 <div class="col">
 
-<div class="card card-producto h-100 shadow border-0 p-3 align-items-center text-center">
+<div class="card card-producto h-100 p-3 text-center border-0 shadow-sm position-relative overflow-hidden" 
+     data-id="<?php echo $producto['id']; ?>" 
+     data-nombre="<?php echo $producto['nombre']; ?>"
+     data-precio="<?php echo $producto['precio']; ?>"
+     data-desc="<?php echo htmlspecialchars($producto['descripcion'] ?? ''); ?>"
+     data-desc-corta="<?php echo htmlspecialchars($producto['descripcion_corta'] ?? ''); ?>"
+     data-material="<?php echo $producto['material'] ?? ''; ?>">
 
-    <img src="<?php echo $producto['img']; ?>"
-         class="img-fluid mb-3"
-         style="max-height: 150px; object-fit: contain;"
-         alt="<?php echo $producto['nombre']; ?>">
+    <?php if($esNuevo): ?>
+    <span class="position-absolute top-0 end-0 mt-2 me-2 badge rounded-pill text-white fw-bold" 
+          style="background-color: #5e1920; font-size: 11px; z-index: 2;">NUEVO</span>
+    <?php endif; ?>
 
-    <div class="card-body w-100 p-0">
+    <div class="position-relative bg-white rounded-3 mb-2 p-3 img-container" style="height: 180px;">
+        <img src="<?php echo $producto['img']; ?>" 
+             class="img-fluid producto-img w-100 h-100" 
+             style="object-fit: contain;"
+             alt="<?php echo $producto['nombre']; ?>">
+        <button class="btn btn-sm btn-vista-rapida text-white fw-semibold rounded-pill px-3 py-1" 
+                style="background: rgba(94, 25, 32, 0.95); font-size: 12px; white-space: nowrap; position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);"
+                data-bs-toggle="modal" data-bs-target="#modalVistaRapida">
+            <i class="bi bi-eye"></i> Vista rápida
+        </button>
+    </div>
 
-        <h5 class="fw-bold text-dark">
+    <div class="card-body w-100 p-0 d-flex flex-column">
+
+        <h5 class="fw-bold text-dark mb-1 producto-nombre">
             <?php echo $producto['nombre']; ?>
         </h5>
 
-        <h3 class="text-primary fw-bold">
-            $<?php echo $producto['precio']; ?>
-        </h3>
+        <?php if(isset($producto['descripcion_corta'])): ?>
+        <p class="text-muted small mb-2 producto-desc-corta">
+            <?php echo $producto['descripcion_corta']; ?>
+        </p>
+        <?php endif; ?>
 
-        <span class="badge bg-success bg-opacity-25 text-success mb-3">
+        <div class="producto-acciones mt-auto">
+            <div class="mb-2">
+                <span class="fw-bold" style="color: #5e1920; font-size: 1.6rem;">$<?php echo number_format($producto['precio'], 2); ?></span>
+            </div>
 
-            📦 <?php echo $producto['stock']; ?> disponibles
+            <span class="badge bg-success bg-opacity-25 text-success mb-2 px-3 py-1 rounded-pill" style="font-size: 11px;">
+                📦 <?php echo $producto['stock']; ?> disponibles
+            </span>
 
-        </span>
+            <select class="form-select form-select-sm mb-2 mx-auto talla-select rounded-3" 
+                    style="max-width: 150px; font-size: 13px;" required>
+                <option value="">Selecciona talla</option>
+                <?php if(isset($producto['tallas'])): ?>
+                    <?php foreach($producto['tallas'] as $talla): ?>
+                        <option value="<?php echo $talla; ?>"><?php echo $talla; ?></option>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <option value="U">U</option>
+                    <option value="CH">CH</option>
+                    <option value="M">M</option>
+                    <option value="G">G</option>
+                    <option value="XG">XG</option>
+                <?php endif; ?>
+            </select>
 
-        <div class="input-group mb-3 justify-content-center">
+            <div class="input-group input-group-sm mb-2 justify-content-center">
+                <button class="btn btn-outline-secondary btn-restar rounded-start-3" type="button">-</button>
+                <input type="number" class="form-control text-center cantidad-input" value="1" min="1" max="<?php echo $producto['stock']; ?>" readonly>
+                <button class="btn btn-outline-secondary btn-sumar rounded-end-3" type="button">+</button>
+            </div>
 
-            <button class="btn btn-outline-secondary btn-restar">
-                -
+            <button class="btn btn-reservar w-100 text-white fw-bold btn-agregar rounded-3 py-2">
+                <i class="bi bi-cart-plus"></i> Agregar
             </button>
-
-            <input type="number"
-                   class="form-control text-center cantidad-input"
-                   value="1"
-                   min="1">
-
-            <button class="btn btn-outline-secondary btn-sumar">
-                +
-            </button>
-
         </div>
-
-        <button class="btn btn-reservar w-100 text-white fw-bold">
-
-            Reservar
-
-        </button>
 
     </div>
 
@@ -463,42 +340,29 @@ elseif($categoria === $producto['cat']){
 <?php endforeach; ?>
 
 </div>
+</div>
 
+<!-- MODAL VISTA RÁPIDA -->
+<div class="modal fade" id="modalVistaRapida" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius: 20px;">
+      <div class="modal-header text-white" style="background-color: #5e1920; border-radius: 20px 20px 0 0;">
+        <h5 class="modal-title fw-bold" id="modal-nombre">Producto</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="" id="modal-img" class="img-fluid mb-3" style="max-height: 300px; object-fit: contain;">
+        <h3 class="fw-bold" style="color: #5e1920;" id="modal-precio">$0</h3>
+        <p class="text-muted small mb-2" id="modal-desc"></p>
+        <p class="small"><strong>Material:</strong> <span id="modal-material"></span></p>
+        <p class="badge bg-success bg-opacity-25 text-success" id="modal-stock"></p>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-
-document.querySelectorAll('.btn-sumar').forEach(button => {
-
-    button.addEventListener('click', function(){
-
-        let input = this.parentElement.querySelector('input');
-
-        input.value = parseInt(input.value) + 1;
-
-    });
-
-});
-
-document.querySelectorAll('.btn-restar').forEach(button => {
-
-    button.addEventListener('click', function(){
-
-        let input = this.parentElement.querySelector('input');
-
-        if(parseInt(input.value) > 1){
-
-            input.value = parseInt(input.value) - 1;
-
-        }
-
-    });
-
-});
-
-</script>
+<script src="js/main.js"></script>
 
 </body>
 </html>

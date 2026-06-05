@@ -1,0 +1,233 @@
+/* ===================================
+   NOVEDADES ECONÓMICA - ESTILOS
+   Solo lo que Bootstrap 5 no hace
+   =================================== */
+
+/* 1. ANIMACIÓN HOVER DE LA CARD */
+.card-producto{
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-producto:hover{
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(94, 25, 32, 0.2) !important;
+}
+
+/* 2. ZOOM DE IMAGEN EN HOVER */
+.card-producto:hover .producto-img{
+    transform: scale(1.1);
+}
+
+.producto-img{
+    transition: transform 0.5s ease;
+    height: 190px;
+    object-fit: contain;
+    width: auto;
+    max-width: 100%;
+    max-height: 190px;
+}
+
+/* 3. CONTENEDOR DE IMAGEN - ALTURA FIJA PARA TODAS */
+.img-container{
+    overflow: hidden;
+    position: relative;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    height: 230px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 4. BOTÓN VISTA RÁPIDA QUE APARECE DESDE ABAJO */
+.btn-vista-rapida{
+    position: absolute;
+    bottom: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: all 0.3s ease;
+    z-index: 10;
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(94, 25, 32, 0.95);
+}
+
+.card-producto:hover .btn-vista-rapida{
+    bottom: 10px;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* 5. GRADIENTE GUINDA DEL BOTÓN AGREGAR */
+.btn-reservar{
+    background: linear-gradient(135deg, #5e1920, #7a1f29);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-reservar:hover{
+    background: linear-gradient(135deg, #7a1f29, #5e1920);
+    transform: scale(1.02);
+    box-shadow: 0 5px 15px rgba(94, 25, 32, 0.4);
+}
+
+/* 6. AJUSTE PARA INPUTS DE CANTIDAD */
+.cantidad-input{
+    max-width: 60px;
+    border-left: 0;
+    border-right: 0;
+}
+
+.btn-restar, .btn-sumar{
+    width: 38px;
+}
+
+/* 7. ALTURA UNIFORME - BODY FLEX */
+.card-producto .card-body{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+/* 8. TÍTULO CON ALTURA FIJA - 2 LÍNEAS MÁXIMO */
+.producto-nombre{
+    min-height: 48px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.3;
+}
+
+/* 9. DESCRIPCIÓN CORTA CON ALTURA FIJA - 2 LÍNEAS MÁXIMO */
+.producto-desc-corta{
+    min-height: 42px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+/* 10. EMPUJAR ACCIONES AL FONDO */
+.producto-acciones{
+    margin-top: auto;
+}
+
+/* 11. AJUSTE ESPECÍFICO PARA ADMIN - MISMA ALTURA */
+.admin-panel .producto-img{
+    height: 180px !important;
+    max-height: 180px;
+    width: auto;
+}
+
+.admin-panel .img-container{
+    height: 220px;
+}
+
+/* ===================================
+   SIDEBAR Y LAYOUT ADMIN
+   =================================== */
+
+body{
+    background-color: #f4f4f4;
+}
+
+.sidebar{
+    width: 250px;
+    height: 100vh;
+    background-color: #5e1920;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding-top: 20px;
+    z-index: 1040;
+    overflow-y: auto;
+}
+
+.sidebar h3{
+    color: white;
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.sidebar a{
+    display: block;
+    color: white;
+    text-decoration: none;
+    padding: 15px 20px;
+    transition: 0.3s;
+    font-size: 15px;
+}
+
+.sidebar a i{
+    margin-right: 10px;
+    font-size: 18px;
+}
+
+.sidebar a:hover, .sidebar a.active{
+    background-color: rgba(255,255,255,0.1);
+    border-left: 3px solid white;
+}
+
+.main-content{
+    margin-left: 250px;
+    padding: 30px;
+}
+
+.main-content.tienda-mode{
+    padding: 0;
+    margin-left: 250px;
+    background-color: #5e1920;
+    min-height: 100vh;
+}
+
+.card-panel{
+    border: none;
+    border-radius: 15px;
+    transition: 0.3s;
+}
+
+.card-panel:hover{
+    transform: translateY(-5px);
+}
+
+.tabla{
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.topbar{
+    background-color: white;
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.badge-nuevo{
+    background-color: #5e1920;
+    font-size: 11px;
+    z-index: 2;
+}
+
+.precio-ginda{
+    color: #5e1920;
+    font-size: 1.6rem;
+}
+
+.badge-stock{
+    font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .sidebar { width: 200px; }
+    .sidebar h3 { font-size: 1.2rem; }
+    .sidebar a { font-size: 14px; padding: 12px 15px; }
+    .main-content { margin-left: 200px; }
+    .main-content.tienda-mode { margin-left: 200px; }
+}

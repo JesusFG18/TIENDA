@@ -1,6 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();}// <- Esta línea te falta
+    session_start();
+}
 require_once "../includes/auth.php";
 require_once "../includes/datos.php";
 
@@ -9,6 +10,8 @@ verificarRol('vendedor');
 // PANEL ACTUAL
 $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
+// RUTA BASE PARA ARCHIVOS - IMPORTANTE PORQUE ESTÁS EN /vendedor/
+$ruta_base = '../';
 ?>
 
 <!DOCTYPE html>
@@ -29,6 +32,8 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    <link rel="stylesheet" href="<?php echo $ruta_base; ?>css/estilos.css">
+
     <style>
 
         body{
@@ -43,6 +48,7 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
             top: 0;
             left: 0;
             padding-top: 20px;
+            z-index: 1000;
         }
 
         .sidebar h3{
@@ -61,6 +67,10 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
         .sidebar a:hover{
             background-color: rgba(255,255,255,0.1);
+        }
+
+        .sidebar a.active{
+            background-color: rgba(0,0,0,0.3);
         }
 
         .main-content{
@@ -89,6 +99,17 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
             overflow: hidden;
         }
 
+        @media(max-width:768px){
+            .sidebar{
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            .main-content{
+                margin-left: 0;
+            }
+        }
+
     </style>
 
 </head>
@@ -104,28 +125,28 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
     </h3>
 
-    <a href="?panel=ventas">
+    <a href="?panel=ventas" class="<?php echo $panel=='ventas' ? 'active' : ''; ?>">
 
         <i class="bi bi-cart-plus"></i>
         Ventas
 
     </a>
 
-    <a href="?panel=pedidos">
+    <a href="?panel=pedidos" class="<?php echo $panel=='pedidos' ? 'active' : ''; ?>">
 
         <i class="bi bi-bag-check"></i>
         Pedidos
 
     </a>
 
-    <a href="?panel=apartados">
+    <a href="?panel=apartados" class="<?php echo $panel=='apartados' ? 'active' : ''; ?>">
 
         <i class="bi bi-cash-coin"></i>
         Apartados
 
     </a>
 
-    <a href="?panel=clientes">
+    <a href="?panel=clientes" class="<?php echo $panel=='clientes' ? 'active' : ''; ?>">
 
         <i class="bi bi-people"></i>
         Clientes
@@ -159,7 +180,7 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
             <small class="text-muted">
 
-                Bienvenido Vendedor
+                Bienvenido <?php echo htmlspecialchars($_SESSION['usuario'] ?? 'Vendedor'); ?>
 
             </small>
 
@@ -196,7 +217,7 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
                         <h2 class="fw-bold">
 
-                            <?php echo count($productos); ?>
+                            <?php echo isset($productos) ? count($productos) : 0; ?>
 
                         </h2>
 
@@ -303,7 +324,8 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
                 <input type="text"
                        class="form-control"
-                       placeholder="Nombre del cliente">
+                       placeholder="Nombre del cliente"
+                       id="input-cliente">
 
             </div>
 
@@ -315,17 +337,24 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
                 </label>
 
-                <select class="form-select">
+                <select class="form-select" id="select-producto">
 
-                    <?php foreach($productos as $producto): ?>
+                    <option value="">Selecciona producto</option>
+                    <?php if(isset($productos)): ?>
+                        <?php foreach($productos as $producto): ?>
 
-                    <option>
+                        <option value="<?php echo $producto['id']; ?>" 
+                                data-precio="<?php echo $producto['precio']; ?>"
+                                data-stock="<?php echo $producto['stock']; ?>"
+                                data-img="<?php echo $ruta_base . $producto['img']; ?>"
+                                data-categoria="<?php echo $producto['categoria'] ?? ''; ?>">
 
-                        <?php echo $producto['nombre']; ?>
+                            <?php echo $producto['nombre']; ?> - $<?php echo $producto['precio']; ?>
 
-                    </option>
+                        </option>
 
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
 
                 </select>
 
@@ -342,7 +371,8 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
                 <input type="number"
                        class="form-control"
                        value="1"
-                       min="1">
+                       min="1"
+                       id="input-cantidad">
 
             </div>
 
@@ -354,15 +384,15 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
                 </label>
 
-                <select class="form-select">
+                <select class="form-select" id="select-pago">
 
-                    <option>
+                    <option value="pagado">
 
                         Pagado
 
                     </option>
 
-                    <option>
+                    <option value="apartado">
 
                         Apartado
 
@@ -374,9 +404,9 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
             <div class="col-md-2 d-flex align-items-end">
 
-                <button class="btn btn-success w-100">
+                <button class="btn btn-success w-100" id="btn-agregar">
 
-                    Agregar
+                    <i class="bi bi-plus-circle"></i> Agregar
 
                 </button>
 
@@ -403,12 +433,13 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
     <div class="table-responsive">
 
-        <table class="table table-hover align-middle mb-0">
+        <table class="table table-hover align-middle mb-0" id="tabla-venta">
 
             <thead class="table-light">
 
                 <tr>
 
+                    <th>Imagen</th>
                     <th>Producto</th>
                     <th>Categoría</th>
                     <th>Precio</th>
@@ -424,36 +455,7 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
             <tbody>
 
-                <tr>
-
-                    <td>Camisa Negra</td>
-                    <td>Camisas</td>
-                    <td>$250</td>
-                    <td>2</td>
-                    <td>$500</td>
-                    <td>$250</td>
-
-                    <td>
-
-                        <span class="badge bg-warning text-dark">
-
-                            Apartado
-
-                        </span>
-
-                    </td>
-
-                    <td>
-
-                        <button class="btn btn-danger btn-sm">
-
-                            Quitar
-
-                        </button>
-
-                    </td>
-
-                </tr>
+                <!-- Se llena con JS -->
 
             </tbody>
 
@@ -465,13 +467,13 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 
         <h4 class="fw-bold">
 
-            Total: $500
+            Total: $<span id="total-venta">0</span>
 
         </h4>
 
-        <button class="btn btn-success">
+        <button class="btn btn-success" id="btn-finalizar">
 
-            Finalizar Venta
+            <i class="bi bi-check-circle"></i> Finalizar Venta
 
         </button>
 
@@ -755,6 +757,9 @@ $panel = isset($_GET['panel']) ? $_GET['panel'] : 'ventas';
 <?php endif; ?>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="<?php echo $ruta_base; ?>js/main.js"></script>
 
 </body>
 

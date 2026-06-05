@@ -1,24 +1,7 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-// Inicializar array de clientes si no existe
-if(!isset($_SESSION['clientes'])){
-    $_SESSION['clientes'] = [];
-}
+session_start();
+require_once "includes/db.php";
 
-// USUARIOS POR DEFECTO PARA PRUEBAS
-if(!isset($_SESSION['usuarios_default_creados'])){
-    // Cliente de prueba
-    $_SESSION['clientes']['Clien1'] = [
-        'tel' => '6120000001',
-        'pass' => '123'
-    ];
-    
-    $_SESSION['usuarios_default_creados'] = true;
-}
-
-// Si ya inició sesión, mándalo según su rol
 if(isset($_SESSION['rol'])){
     if($_SESSION['rol'] == 'admin'){
         header("Location: admin/inventario.php");
@@ -29,81 +12,116 @@ if(isset($_SESSION['rol'])){
     }
     exit();
 }
+
+function generarPassword($longitud = 12) {
+    $caracteres = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
+    return substr(str_shuffle($caracteres), 0, $longitud);
+}
+
 $error = '';
 $vista = $_GET['vista'] ?? 'login';
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){
     
-    // REGISTRAR CLIENTE NUEVO
+    // REGISTRAR CLIENTE - SOLO NOMBRE, USUARIO, TELEFONO, PASSWORD
     if(isset($_POST['registrar'])){
         $nombre = trim($_POST['nombre']);
+        $usuario = trim($_POST['usuario']);
         $telefono = trim($_POST['telefono']);
         $password = trim($_POST['password']);
         
-        if(empty($nombre) || empty($telefono) || empty($password)){
+        if(empty($nombre) || empty($usuario) || empty($telefono) || empty($password)){
             $error = 'Completa todos los campos';
             $vista = 'registro';
-        } 
-        elseif(isset($_SESSION['clientes'][$nombre])){
-            $error = 'Ese usuario ya está registrado';
+        } elseif(strlen($password) < 6){
+            $error = 'La contraseña debe tener mínimo 6 caracteres';
             $vista = 'registro';
-        } 
-        else {
-            // Guardar cliente
-            $_SESSION['clientes'][$nombre] = [
-                'tel' => $telefono,
-                'pass' => $password
-            ];
-            // Iniciar sesión directo
-            $_SESSION['usuario'] = $nombre;
-            $_SESSION['rol'] = 'cliente';
-            header("Location: index.php");
-            exit();
-        }
-    }
-    
-    // LOGIN NORMAL
-    if(isset($_POST['entrar'])){
-        $rol = $_POST['rol'] ?? '';
-        $usuario = trim($_POST['usuario'] ?? '');
-        $password = trim($_POST['password'] ?? '');
-        
-        if(empty($rol)){
-            $error = 'Selecciona un rol';
-        }
-        elseif(empty($usuario)){
-            $error = 'Escribe un nombre de usuario';
-        }
-        // ADMIN: entra con cualquier dato
-        elseif($rol == 'admin'){
-            $_SESSION['usuario'] = $usuario;
-            $_SESSION['rol'] = 'admin';
-            header("Location: admin/inventario.php");
-            exit();
-        }
-        // VENDEDOR: entra con cualquier dato
-        elseif($rol == 'vendedor'){
-            $_SESSION['usuario'] = $usuario;
-            $_SESSION['rol'] = 'vendedor';
-            header("Location: vendedor/punto_venta.php");
-            exit();
-        }
-        // CLIENTE: validar contra los registrados
-        elseif($rol == 'cliente'){
-            if(empty($password)){
-                $error = 'Escribe tu contraseña';
-            }
-            elseif(isset($_SESSION['clientes'][$usuario]) && $_SESSION['clientes'][$usuario]['pass'] == $password){
+        } else {
+            $password_hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $conn->prepare("INSERT INTO usuarios (usuario, password, rol, nombre, telefono) VALUES (?, ?, 'cliente', ?, ?)");
+            $stmt->bind_param("ssss", $usuario, $password_hash, $nombre, $telefono);
+            
+            if($stmt->execute()){
+                $_SESSION['id_usuario'] = $conn->insert_id;
                 $_SESSION['usuario'] = $usuario;
                 $_SESSION['rol'] = 'cliente';
+                $_SESSION['nombre'] = $nombre;
                 header("Location: index.php");
                 exit();
             } else {
-                $error = 'Usuario o contraseña incorrectos';
+                $error = 'El usuario ya existe';
+                $vista = 'registro';
             }
         }
     }
-} // <- LLAVE QUE FALTABA
+    
+    // LOGIN
+    if(isset($_POST['entrar'])){
+        $usuario = trim($_POST['usuario']);
+        $password = trim($_POST['password']);
+        
+        // BYPASS ESPECIAL SOLO PARA admin1
+        if($usuario == 'admin1'){
+            $stmt = $conn->prepare("SELECT id, usuario, rol, nombre, activo FROM usuarios WHERE usuario = 'admin1'");
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if($user = $result->fetch_assoc()){
+                if(!$user['activo']){
+                    $error = 'Usuario desactivado';
+                } else {
+                    // Genera contraseña aleatoria nueva cada vez que entra
+                    $nueva_pass = generarPassword(12);
+                    $pass_hash = password_hash($nueva_pass, PASSWORD_DEFAULT);
+                    
+                    // La actualiza en BD
+                    $stmt_upd = $conn->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+                    $stmt_upd->bind_param("si", $pass_hash, $user['id']);
+                    $stmt_upd->execute();
+                    
+                    // Inicia sesión sin validar la password que escribió
+                    $_SESSION['id_usuario'] = $user['id'];
+                    $_SESSION['usuario'] = $user['usuario'];
+                    $_SESSION['rol'] = $user['rol'];
+                    $_SESSION['nombre'] = $user['nombre'];
+                    $_SESSION['admin_pass_temporal'] = $nueva_pass;
+                    
+                    header("Location: admin/inventario.php");
+                    exit();
+                }
+            } else {
+                $error = 'Usuario admin1 no existe en BD';
+            }
+        } 
+        // LOGIN NORMAL PARA TODOS LOS DEMÁS
+        else {
+            $stmt = $conn->prepare("SELECT id, usuario, password, rol, nombre, activo FROM usuarios WHERE usuario = ?");
+            $stmt->bind_param("s", $usuario);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if($user = $result->fetch_assoc()){
+                if(!$user['activo']){
+                    $error = 'Usuario desactivado';
+                } elseif(password_verify($password, $user['password'])){
+                    $_SESSION['id_usuario'] = $user['id'];
+                    $_SESSION['usuario'] = $user['usuario'];
+                    $_SESSION['rol'] = $user['rol'];
+                    $_SESSION['nombre'] = $user['nombre'];
+                    
+                    if($user['rol'] == 'admin') header("Location: admin/inventario.php");
+                    elseif($user['rol'] == 'vendedor') header("Location: vendedor/punto_venta.php");
+                    else header("Location: index.php");
+                    exit();
+                } else {
+                    $error = 'Contraseña incorrecta';
+                }
+            } else {
+                $error = 'Usuario no encontrado';
+            }
+        }
+    }
+} 
 ?>
 
 <!DOCTYPE html>
@@ -111,8 +129,9 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Iniciar Sesión</title>
+<title>Novedades Economica</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <style>
 body{
     background-color: #5e1920;
@@ -123,118 +142,109 @@ body{
 }
 .card-login{
     width: 100%;
-    max-width: 400px;
+    max-width: 450px;
     border-radius: 15px;
+}
+.logo-tienda{
+    font-size: 2rem;
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: bold;
 }
 </style>
 </head>
 <body>
 
-<div class="card card-login p-4 shadow">
-    
-    <?php if($vista == 'login'): ?>
-    <!-- VISTA LOGIN -->
-    <h2 class="text-center mb-4 fw-bold">Iniciar Sesión</h2>
-    
-    <?php if($error): ?>
-    <div class="alert alert-danger"><?php echo $error; ?></div>
-    <?php endif; ?>
-
-   <form method="POST">
-    <!-- 1. ROL PRIMERO Y CON CLIENTE POR DEFECTO -->
-    <div class="mb-3">
-        <label class="form-label">Selecciona un Rol</label>
-        <select name="rol" id="selectRol" class="form-select" required>
-            <option value="cliente" selected>Cliente</option>
-            <option value="admin">Admin</option>
-            <option value="vendedor">Vendedor</option>
-        </select>
+<div class="container">
+    <div class="logo-tienda">
+        <i class="bi bi-shop"></i> NOVEDADES ECONÓMICA
     </div>
-
-    <!-- 2. USUARIO -->
-    <div class="mb-3">
-        <label class="form-label">Usuario</label>
-        <input type="text" name="usuario" class="form-control" placeholder="Nombre de usuario" required>
-    </div>
-
-    <!-- 3. CONTRASEÑA VISIBLE POR DEFECTO PORQUE ROL = CLIENTE -->
-    <div class="mb-3" id="campoPassword">
-        <label class="form-label">Contraseña</label>
-        <input type="password" name="password" id="inputPassword" class="form-control" required>
-        <small class="text-muted" id="avisoPass" style="display:none;">Admin/Vendedor no necesitan contraseña</small>
-    </div>
-
-    <button type="submit" name="entrar" class="btn btn-dark w-100 fw-bold mb-2">Entrar</button>
     
-    <!-- 4. LINK VISIBLE POR DEFECTO PORQUE ROL = CLIENTE -->
-    <div class="text-center" id="linkRegistro">
-        <a href="?vista=registro" class="text-decoration-none">¿Eres cliente nuevo? Regístrate</a>
-    </div>
-</form>
-
-    <?php else: ?>
-    <!-- VISTA REGISTRO CLIENTE -->
-    <h2 class="text-center mb-4 fw-bold">Registrar Cliente</h2>
-    
-    <?php if($error): ?>
-    <div class="alert alert-danger"><?php echo $error; ?></div>
-    <?php endif; ?>
-
-    <form method="POST">
-        <div class="mb-3">
-            <label class="form-label">Nombre / Usuario</label>
-            <input type="text" name="nombre" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Teléfono</label>
-            <input type="text" name="telefono" class="form-control" required>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Contraseña</label>
-            <input type="password" name="password" class="form-control" required>
-        </div>
-
-        <button type="submit" name="registrar" class="btn btn-success w-100 fw-bold mb-2">Registrar Usuario</button>
+    <div class="card card-login p-4 shadow mx-auto">
         
-        <div class="text-center">
-            <a href="login.php" class="text-decoration-none">¿Ya tienes cuenta? Inicia Sesión</a>
-        </div>
-    </form>
-    <?php endif; ?>
+        <?php if($vista == 'login'): ?>
+        <!-- LOGIN -->
+        <h2 class="text-center mb-1 fw-bold">Bienvenido</h2>
+        <p class="text-center text-muted mb-4">Inicia sesión en tu cuenta</p>
+        
+        <?php if(isset($_GET['reset'])): ?>
+        <div class="alert alert-success">Contraseña actualizada correctamente. Ya puedes iniciar sesión.</div>
+        <?php endif; ?>
+        
+        <?php if($error): ?>
+        <div class="alert alert-danger"><?php echo $error; ?></div>
+        <?php endif; ?>
 
+       <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Usuario</label>
+                <input type="text" name="usuario" class="form-control" placeholder="Nombre de usuario" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" name="password" class="form-control" placeholder="Tu contraseña" required>
+            </div>
+
+            <button type="submit" name="entrar" class="btn btn-dark w-100 fw-bold mb-3">Entrar</button>
+            
+            <div class="text-center mb-3">
+                <a href="recuperar.php" class="text-decoration-none">¿Olvidaste tu contraseña?</a>
+            </div>
+            
+            <div class="text-center">
+                <p class="mb-0">¿No tienes cuenta? 
+                    <a href="?vista=registro" class="text-decoration-none fw-bold">Regístrate aquí</a>
+                </p>
+            </div>
+        </form>
+
+        <?php else: ?>
+        <!-- REGISTRO CLIENTE - SOLO 4 CAMPOS -->
+        <h2 class="text-center mb-1 fw-bold">Crear Cuenta</h2>
+        <p class="text-center text-muted mb-4">Regístrate y empieza a comprar</p>
+        
+        <?php if($error): ?>
+        <div class="alert alert-danger"><?php echo $error; ?></div>
+        <?php endif; ?>
+
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Nombre completo</label>
+                <input type="text" name="nombre" class="form-control" placeholder="Ej: Juan Pérez" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Usuario</label>
+                <input type="text" name="usuario" class="form-control" placeholder="Ej: juan123" required>
+                <small class="text-muted">Este será tu nombre para iniciar sesión</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Número de teléfono</label>
+                <input type="tel" name="telefono" class="form-control" placeholder="6120000000" required>
+                <small class="text-muted">Lo usarás para recuperar tu contraseña</small>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" name="password" class="form-control" placeholder="Mínimo 6 caracteres" required>
+            </div>
+
+            <button type="submit" name="registrar" class="btn btn-success w-100 fw-bold mb-3">
+                <i class="bi bi-person-plus"></i> Crear mi cuenta
+            </button>
+            
+            <div class="text-center">
+                <p class="mb-2">¿Ya tienes cuenta?</p>
+                <a href="?vista=login" class="btn btn-outline-dark w-100">Iniciar Sesión</a>
+            </div>
+        </form>
+        <?php endif; ?>
+
+    </div>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const selectRol = document.getElementById('selectRol');
-    const campoPass = document.getElementById('campoPassword');
-    const linkRegistro = document.getElementById('linkRegistro');
-    const avisoPass = document.getElementById('avisoPass');
-    const inputPassword = document.getElementById('inputPassword');
-    
-    function actualizarVista() {
-        const rol = selectRol.value;
-        
-        if(rol === 'admin' || rol === 'vendedor'){
-            campoPass.style.display = 'none';
-            linkRegistro.style.display = 'none';
-            inputPassword.removeAttribute('required');
-            inputPassword.value = '';
-        } 
-        else if(rol === 'cliente'){
-            campoPass.style.display = 'block';
-            linkRegistro.style.display = 'block';
-            avisoPass.style.display = 'none';
-            inputPassword.setAttribute('required', 'required');
-        }
-    }
-    
-    selectRol.addEventListener('change', actualizarVista);
-    actualizarVista();
-});
-</script>
 
 </body>
 </html>
