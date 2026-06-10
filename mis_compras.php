@@ -1,4 +1,6 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL); // ← TE FALTABA EL ;
 session_start();
 require_once "includes/db.php";
 require_once "includes/auth.php";
@@ -11,7 +13,7 @@ if(!isset($_SESSION['id_usuario'])){
 
 $id_usuario = $_SESSION['id_usuario'];
 
-// Obtener pedidos del cliente - CORREGIDO CON PREPARED STATEMENT
+// Obtener pedidos del cliente
 $stmt = $conn->prepare("SELECT * FROM pedidos WHERE id_usuario = ? ORDER BY fecha_pedido DESC");
 $stmt->bind_param("i", $id_usuario);
 $stmt->execute();
@@ -39,7 +41,6 @@ $pedidos = $stmt->get_result();
     <div class="container">
         <a class="navbar-brand fw-bold" href="index.php">NOVEDADES<span style="color:#e6b800;">ECONÓMICA</span></a>
         <div class="ms-auto d-flex align-items-center gap-3">
-            <!-- CORRECCIÓN 1: Cambié carrito.php por carrito/ -->
             <a href="carrito/" class="btn btn-outline-light">
                 <i class="bi bi-cart"></i> Carrito
             </a>
@@ -52,9 +53,6 @@ $pedidos = $stmt->get_result();
 <div class="container my-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2><i class="bi bi-bag-check"></i> Mis Compras</h2>
-        <a href="index.php" class="btn btn-outline-primary">
-            <i class="bi bi-arrow-left"></i> Seguir Comprando
-        </a>
     </div>
     
     <?php if(isset($_GET['exito'])): ?>
@@ -72,7 +70,6 @@ $pedidos = $stmt->get_result();
         </div>
     <?php else: ?>
         <?php while($pedido = $pedidos->fetch_assoc()): 
-            // CORRECCIÓN 2: Usar prepared statement para detalle
             $stmt_detalle = $conn->prepare("SELECT dp.*, p.nombre, p.img_principal 
                                            FROM detalle_pedidos dp 
                                            JOIN productos p ON dp.id_producto = p.id 
@@ -98,7 +95,9 @@ $pedidos = $stmt->get_result();
                 </span>
             </div>
             <div class="card-body">
-                <?php while($prod = $detalle->fetch_assoc()): ?>
+                <?php while($prod = $detalle->fetch_assoc()): 
+                    $subtotal = $prod['cantidad'] * $prod['precio_unitario']; // ← CALCULAMOS SUBTOTAL
+                ?>
                 <div class="row align-items-center mb-3 pb-3 border-bottom">
                     <div class="col-md-2">
                         <img src="<?php echo $prod['img_principal']; ?>" class="img-fluid rounded" alt="<?php echo htmlspecialchars($prod['nombre']); ?>">
@@ -111,16 +110,15 @@ $pedidos = $stmt->get_result();
                         <span>$<?php echo number_format($prod['precio_unitario'], 2); ?></span>
                     </div>
                     <div class="col-md-2 text-end">
-                        <strong>$<?php echo number_format($prod['subtotal'], 2); ?></strong>
+                        <strong>$<?php echo number_format($subtotal, 2); ?></strong>
                     </div>
                 </div>
                 <?php endwhile; ?>
                 
                 <div class="row mt-3">
                     <div class="col-md-8">
-                        <p class="mb-1"><strong>Dirección:</strong> <?php echo htmlspecialchars($pedido['direccion']); ?></p>
-                        <p class="mb-1"><strong>Teléfono:</strong> <?php echo htmlspecialchars($pedido['telefono_contacto']); ?></p>
-                        <p class="mb-0"><strong>Método de pago:</strong> <?php echo htmlspecialchars($pedido['metodo_pago']); ?></p>
+                        <!-- BORRÉ direccion, telefono y metodo_pago porque no existen en tu tabla -->
+                        <p class="mb-0"><strong>Estado:</strong> <?php echo ucfirst($pedido['estado']); ?></p>
                     </div>
                     <div class="col-md-4 text-end">
                         <h4>Total: $<?php echo number_format($pedido['total'], 2); ?></h4>

@@ -54,7 +54,6 @@ body { background-color: #f8f9fa; }
             <li class="nav-item mb-2 bg-danger rounded"><a href="reportes.php" class="nav-link text-white"><i class="bi bi-graph-up"></i> Reportes</a></li>
             <li class="nav-item mb-2"><a href="usuarios.php" class="nav-link text-white"><i class="bi bi-people"></i> Usuarios</a></li>
             <li class="nav-item mb-2"><a href="categorias.php" class="nav-link text-white"><i class="bi bi-tags"></i> Secciones/Categorías</a></li>
-            <li class="nav-item mb-2"><a href="../index.php" class="nav-link text-white"><i class="bi bi-shop"></i> Ir a Tienda</a></li>
             <li class="nav-item mt-4"><a href="../logout.php" class="nav-link text-white"><i class="bi bi-box-arrow-left"></i> Cerrar Sesión</a></li>
         </ul>
     </div>
