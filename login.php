@@ -62,37 +62,27 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
         
         // BYPASS ESPECIAL SOLO PARA admin1
         if($usuario == 'admin1'){
-            $stmt = $conn->prepare("SELECT id, usuario, rol, nombre, activo FROM usuarios WHERE usuario = 'admin1'");
-            $stmt->execute();
-            $result = $stmt->get_result();
-            
-            if($user = $result->fetch_assoc()){
-                if(!$user['activo']){
-                    $error = 'Usuario desactivado';
-                } else {
-                    // Genera contraseña aleatoria nueva cada vez que entra
-                    $nueva_pass = generarPassword(12);
-                    $pass_hash = password_hash($nueva_pass, PASSWORD_DEFAULT);
-                    
-                    // La actualiza en BD
-                    $stmt_upd = $conn->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
-                    $stmt_upd->bind_param("si", $pass_hash, $user['id']);
-                    $stmt_upd->execute();
-                    
-                    // Inicia sesión sin validar la password que escribió
-                    $_SESSION['id_usuario'] = $user['id'];
-                    $_SESSION['usuario'] = $user['usuario'];
-                    $_SESSION['rol'] = $user['rol'];
-                    $_SESSION['nombre'] = $user['nombre'];
-                    $_SESSION['admin_pass_temporal'] = $nueva_pass;
-                    
-                    header("Location: admin/inventario.php");
-                    exit();
-                }
-            } else {
-                $error = 'Usuario admin1 no existe en BD';
-            }
-        } 
+    $stmt = $conn->prepare("SELECT id, usuario, password, rol, nombre, activo FROM usuarios WHERE usuario = 'admin1'");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if($user = $result->fetch_assoc()){
+        if(!$user['activo']){
+            $error = 'Usuario desactivado';
+        } elseif(password_verify($password, $user['password'])){
+            // ✓ Contraseña correcta → entra normal
+            $_SESSION['id_usuario'] = $user['id'];
+            $_SESSION['usuario']    = $user['usuario'];
+            $_SESSION['rol']        = $user['rol'];
+            $_SESSION['nombre']     = $user['nombre'];
+            header("Location: admin/inventario.php");
+            exit();
+        } else {
+            $error = 'Contraseña incorrecta';
+        }
+    }
+}
+        
         // LOGIN NORMAL PARA TODOS LOS DEMÁS
         else {
             $stmt = $conn->prepare("SELECT id, usuario, password, rol, nombre, activo FROM usuarios WHERE usuario = ?");
